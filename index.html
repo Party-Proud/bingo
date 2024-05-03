@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bingo Caller</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      text-align: center;
+    }
+    #board {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+      gap: 3px;
+      margin: 10px auto;
+      max-width: 95vw;
+    }
+    .number {
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      padding: 5px;
+      text-align: center;
+      font-size: 16px;
+      background-color: #ffffff;
+    }
+    .newest {
+      background-color: #ff0000;
+      color: #ffffff;
+    }
+    .past {
+      background-color: #ffcc00;
+    }
+    #last-numbers {
+      margin-bottom: 10px;
+      margin-top: 0;
+      text-align: center;
+      padding: 5px;
+    }
+    #last-numbers span {
+      display: inline-block;
+      margin: 5px;
+      padding: 8px 15px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 18px;
+    }
+    .newest {
+      background-color: #ff0000;
+      color: #ffffff;
+    }
+    .past {
+      background-color: #ffcc00;
+    }
+    #buttons {
+      margin-top: 20px;
+      text-align: center;
+    }
+    #buttons button {
+      margin: 5px;
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #clear-button {
+      background-color: #ff0000;
+      color: #ffffff;
+    }
+    #call-button {
+      background-color: #00cc00;
+      color: #ffffff;
+    }
+  </style>
+</head>
+<body>
+  <div id="last-numbers"></div>
+  <div id="board"></div>
+  <div id="buttons">
+    <button id="clear-button" onclick="confirmClear()">Clear</button>
+    <button id="call-button" onclick="callNumber()">Call Number</button>
+  </div>
+
+  <script>
+    let numbersCalled = [];
+    let lastNumbersCalled = [];
+    const board = document.getElementById('board');
+    const lastNumbers = document.getElementById('last-numbers');
+
+    // Create the bingo board
+    for (let i = 1; i <= 90; i++) {
+      const numberDiv = document.createElement('div');
+      numberDiv.classList.add('number');
+      numberDiv.textContent = i;
+      board.appendChild(numberDiv);
+    }
+
+    function callNumber() {
+      if (numbersCalled.length === 90) {
+        alert('All numbers called!');
+        return;
+      }
+
+      let randomNumber;
+      do {
+        randomNumber = Math.floor(Math.random() * 90) + 1;
+      } while (numbersCalled.includes(randomNumber));
+
+      numbersCalled.push(randomNumber);
+      lastNumbersCalled.unshift(randomNumber);
+
+      if (lastNumbersCalled.length > 5) {
+        lastNumbersCalled.pop();
+      }
+
+      updateBoard();
+    }
+
+    function updateBoard() {
+      const numberElements = document.querySelectorAll('.number');
+      numberElements.forEach((element) => {
+        const number = parseInt(element.textContent);
+        const isLit = numbersCalled.includes(number);
+        const isBold = number === lastNumbersCalled[0];
+        element.classList.toggle('newest', isBold);
+        element.classList.toggle('past', isLit && !isBold);
+      });
+
+      displayLastNumbers();
+    }
+
+    function displayLastNumbers() {
+      lastNumbers.innerHTML = '';
+      lastNumbersCalled.forEach((number) => {
+        const span = document.createElement('span');
+        span.textContent = number;
+        if (number === lastNumbersCalled[0]) {
+          span.classList.add('newest');
+        } else {
+          span.classList.add('past');
+        }
+        lastNumbers.appendChild(span);
+      });
+    }
+
+    function confirmClear() {
+      const confirmation = confirm('Are you sure you want to clear all numbers?');
+      if (confirmation) {
+        clearBoard();
+      }
+    }
+
+    function clearBoard() {
+      numbersCalled = [];
+      lastNumbersCalled = [];
+      updateBoard();
+    }
+  </script>
+</body>
+</html>
