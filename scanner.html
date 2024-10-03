@@ -1,170 +1,651 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://gs1.github.io/GS1DigitalLinkCompressionPrototype/src/GS1DigitalLinkToolkit.js"></script>
     <title>Data Matrix Code Scanner</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #f0f0f0;
-        }
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #f0f0f0;
+      }
 
-        #video {
-            width: 100%;
-            max-width: 400px;
-            margin-bottom: 20px;
-        }
+      #video {
+        width: 100%;
+        max-width: 400px;
+        margin-bottom: 20px;
+      }
 
-        #result {
-            font-size: 18px;
-            margin-bottom: 20px;
-        }
+      #result {
+        font-size: 18px;
+        margin-bottom: 20px;
+      }
 
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            margin: 10px;
-            cursor: pointer;
-        }
+      button {
+        padding: 10px 20px;
+        font-size: 16px;
+        margin: 10px;
+        cursor: pointer;
+      }
 
-        .hidden {
-            display: none;
-        }
+      .hidden {
+        display: none;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
+    <h1>Data Matrix Code Scanner v2</h1>
 
-    <h1>Data Matrix Code Scanner</h1>
-    
     <video id="video" class="hidden"></video>
     <div id="result">Data Matrix code will be displayed here</div>
-    
+
     <button id="startBtn">Start Scanning</button>
     <button id="cancelBtn" class="hidden">Cancel</button>
 
     <script src="https://unpkg.com/@zxing/library@latest"></script>
 
     <script>
-        const video = document.getElementById('video');
-        const resultDiv = document.getElementById('result');
-        const startBtn = document.getElementById('startBtn');
-        const cancelBtn = document.getElementById('cancelBtn');
+      const video = document.getElementById("video");
+      const resultDiv = document.getElementById("result");
+      const startBtn = document.getElementById("startBtn");
+      const cancelBtn = document.getElementById("cancelBtn");
 
-        let scanner = new ZXing.BrowserMultiFormatReader();
-        let scanning = false;
+      let scanner = new ZXing.BrowserMultiFormatReader();
+      let scanning = false;
 
-        // Start Scanning
-        startBtn.addEventListener('click', async () => {
-            startBtn.classList.add('hidden');
-            cancelBtn.classList.remove('hidden');
-            resultDiv.textContent = "Scanning for Data Matrix code...";
+      // Start Scanning
+      startBtn.addEventListener("click", async () => {
+        startBtn.classList.add("hidden");
+        cancelBtn.classList.remove("hidden");
+        resultDiv.textContent = "Scanning for Data Matrix code...";
 
-            try {
-                scanning = true;
-                scanner.decodeFromVideoDevice(null, 'video', (result, err) => {
-                    if (result) {
-                        if (result.getBarcodeFormat() === ZXing.BarcodeFormat.DATA_MATRIX) {
-                            const rawText = result.getText();
-                            const formattedText = formatGS1(rawText);
-                            console.log("raw: " + rawText);
-                            //resultDiv.textContent = `Data Matrix Code Found: ${formattedText}`;
-                            document.getElementById('result').appendChild(formatDataToTable(rawText));
+        try {
+          scanning = true;
+          scanner.decodeFromVideoDevice(null, "video", async (result, err) => {
+            if (result) {
+              if (
+                result.getBarcodeFormat() === ZXing.BarcodeFormat.DATA_MATRIX
+              ) {
+                const rawText = result.getText();
+                console.log("raw: " + rawText);
+                //resultDiv.textContent = `Data Matrix Code Found: ${formattedText}`;
 
-                            
-                            stopScanning();
-                        }
-                    } else if (err && !(err instanceof ZXing.NotFoundException)) {
-                        resultDiv.textContent = `Error: ${err}`;
-                    }
-                });
-                video.classList.remove('hidden');
-            } catch (err) {
-                resultDiv.textContent = `Error accessing camera: ${err.message}`;
+                // Example Usage:
+                const decoded = await interpretScan(rawText);
+                console.log("decoded 1: " + decoded);
+                //resultDiv.textContent = `Decoded Data: ${JSON.stringify(
+                //  decoded
+                //)}`;
+
+                                const pc = decoded.ol.find((item) => item.ai === "01").value;
+                
+                const pc_lookup_array = [
+                  { pc: "06009544004714", ref: "DCC4013", manufacture: "Southern Implants", type: "Implant", name: "Deep Conical Implant", desc: "4 x 13mm Parallel Walled Implant" },
+                  { pc: "07630031707024", ref: "021.5308", manufacture: "Straumann", type: "Implant", name: "Bone Level Tapered Implant", desc: "4.1mm RC, SLActive 8mm, Roxolid, Loxim" },
+                  { pc: "07830031707048", ref: "021.5312", manufacture: "Straumann", type: "Implant", name: "Bone Level Tapered Implant", desc: "4.1mm RC, SLActive 12mm, Roxolid, Loxim" },
+                  { pc: "07630031707437", ref: "021.7308", manufacture: "Straumann", type: "Implant", name: "Bone Level Tapered Implant", desc: "4.8mm RC, SLActive 8mm, Roxolid, Loxim" },
+                ];
+                
+                const product = pc_lookup_array.find(item => item.pc === pc);
+                
+                resultDiv.innerHTML = `<h3>Decoded Data</h3>
+                  <b>Product Code:</b> ${pc} <br>
+                  <b>Batch/Lot:</b> ${decoded.ol.find((item) => item.ai === "10").value} <br>
+                  <b>Expiry Date:</b> ${decoded.ol.find((item) => item.ai === "17").value} <br>
+                  ${product ? `
+                    <b>Reference:</b> ${product.ref} <br>
+                    <b>Manufacture:</b> ${product.manufacture} <br>
+                    <b>Type:</b> ${product.type} <br>
+                    <b>Name:</b> ${product.name} <br>
+                    <b>Description:</b> ${product.desc} <br>
+                  ` : '<b>Product details not found.</b>'}
+                `;
+                stopScanning();
+              }
+            } else if (err && !(err instanceof ZXing.NotFoundException)) {
+              resultDiv.textContent = `Error: ${err}`;
             }
-        });
-
-        // Cancel Scanning
-        cancelBtn.addEventListener('click', cancelScanning);
-
-        function cancelScanning() {
-            resultDiv.textContent = "Data Matrix code will be displayed here";
-            stopScanning();
+          });
+          video.classList.remove("hidden");
+        } catch (err) {
+          resultDiv.textContent = `Error accessing camera: ${err.message}`;
         }
-        
-        function stopScanning() {
-            scanning = false;
-            video.classList.add('hidden');
-            startBtn.classList.remove('hidden');
-            cancelBtn.classList.add('hidden');
-            scanner.reset();
+      });
+
+      // Cancel Scanning
+      cancelBtn.addEventListener("click", cancelScanning);
+
+      function cancelScanning() {
+        resultDiv.textContent = "Data Matrix code will be displayed here";
+        stopScanning();
+      }
+
+      function stopScanning() {
+        scanning = false;
+        video.classList.add("hidden");
+        startBtn.classList.remove("hidden");
+        cancelBtn.classList.add("hidden");
+        scanner.reset();
+      }
+
+      function decodeGS1(gs1String) {
+        // Remove any non-printable characters like ASCII 29 (Group Separator)
+        gs1String = gs1String.replace(/[\x1D]/g, "");
+
+        const aiTable = {
+          "01": { name: "GTIN", length: 14 }, // GTIN (Fixed length 14 digits)
+          10: { name: "Batch/Lot Number", variableLength: true, maxLength: 20 }, // Batch or Lot Number (Variable length)
+          11: {
+            name: "Manufacturing Date",
+            variableLength: true,
+            maxLength: 8,
+          }, // Manufacturing Date (Variable, up to 8 digits)
+          17: { name: "Expiration Date", variableLength: true, maxLength: 8 }, // Expiration Date (Variable, up to 8 digits)
+          21: { name: "Serial Number", variableLength: true, maxLength: 20 }, // Serial Number (Variable length)
+          // Add more AIs as needed
+        };
+
+        let index = 0;
+        const decodedData = {};
+
+        while (index < gs1String.length) {
+          const ai = gs1String.substring(index, index + 2);
+          index += 2;
+
+          if (aiTable[ai]) {
+            const aiInfo = aiTable[ai];
+            let value;
+
+            if (aiInfo.variableLength) {
+              let nextAiIndex = gs1String.length;
+              // Find the next AI start (if any)
+              for (let i = index; i < gs1String.length; i++) {
+                if (
+                  Object.keys(aiTable).includes(gs1String.substring(i, i + 2))
+                ) {
+                  nextAiIndex = i;
+                  break;
+                }
+              }
+              value = gs1String.substring(
+                index,
+                Math.min(nextAiIndex, index + aiInfo.maxLength)
+              );
+            } else {
+              value = gs1String.substring(index, index + aiInfo.length);
+            }
+
+            decodedData[aiInfo.name] = value;
+            index += value.length;
+          } else {
+            console.error(`Unknown AI: ${ai}`);
+            break;
+          }
         }
 
-        function formatDataToTable(unstructuredData) {
-    // Extract data using regex for GS1 Application Identifiers
-    const regex = /(\d{2})(\d+)/g; // Matches (AI)(data)
-    const data = [];
-    let match;
+        return decodedData;
+      }
 
-    // Extract the GTIN, Production Date, and Batch Number
-    while ((match = regex.exec(unstructuredData)) !== null) {
-        const ai = match[1];
-        const value = match[2];
+      //////////////////////////////////////
 
-        switch (ai) {
-            case '01':
-                data.push({ name: '(01) GTIN', value: value });
-                break;
-            case '11':
-                // Format production date to YYYY-MM-DD
-                const productionDate = value.substring(0, 2) + '-' + value.substring(2, 4) + '-' + value.substring(4, 6);
-                data.push({ name: '(11) Production Date', value: productionDate });
-                break;
-            case '10':
-                data.push({ name: '(10) Batch Number', value: value });
-                break;
+      /* 
+  A set of functions for interpreting the string of data in various GS1 formats, as found in barcodes of different types
+
+  Dependecies:
+    The GS1 Digital Link toolkit
+    plausibleGS1DL
+
+  Please note that the interpret scan function works for element syntax as well as GS1 Digital Link
+
+  If there are no errors, the interpretScan function returns an object as follows
+
+  AIbrackets: The equivalent GS1 element string in human-readable AI syntax
+  AIfnc1: The equivalent GS1 element string in AI syntax with FNC1 (as used in barcodes)
+  dl: The equivalent GS1 Digital Link URL (on id.gs1.org)
+  ol: An ordered array of objects parsed/interpreted from the input string:
+    ai:    the GS1 Application Identifier
+    label: what that AI is used for
+    value: the value
+
+  The order for the ol list matches that found in a GS1 Digital Link URI
+    - primary identifier
+    - any applicable qualifiers
+    - any data attributes
+    - any non-GS1 AIs and their values
+
+  Simply pass the string to be interpreted to the interpretScan() function.
+
+  It can handle any of the 3 formats:
+    - Human readable AI syntax
+    - Pure AI syntax
+    - GS1 Digital Link
+
+  If the input string cannot be interpreted, i.e. it's not a valid GS1 string, then the returned object
+  has a value for errmsg which is the system error message.
+
+*/
+
+      async function interpretScan(scan) {
+        let gtinRE = /^(\d{8})$|^(\d{12,14})$/;
+        let e,
+          gs1DigitalLinkURI,
+          gs1ElementStrings,
+          gs1Array,
+          primaryKey,
+          AIstringBrackets,
+          AIstringFNC1,
+          errmsg,
+          gs1dlt;
+        let dlOrderedAIlist = [];
+        let dateAIs = ["11", "12", "13", "15", "17"];
+        let doNotEscape = false;
+
+        if ((e = scan.match(gtinRE))) {
+          // So we just have a GTIN (from an EAN/UPC probably)
+          scan = "(01)" + scan;
+          doNotEscape = true;
+        } else if (scan.indexOf(String.fromCharCode(29)) == 0) {
+          scan = scan.substring(1);
+          console.log("We have this " + scan);
         }
-    }
+        // Let's also see if it's a DL URI
+        let plausibleDL = isPlausibleGs1DlUri(scan);
+        // Either way, we're going to need the DL toolkit
+        try {
+          gs1dlt = new GS1DigitalLinkToolkit();
+          if (plausibleDL.any) {
+            if (!plausibleDL.uncompressedWithAlphas) {
+              scan = gs1dlt.decompressGS1DigitalLink(
+                scan,
+                false,
+                "https://id.gs1.org"
+              ); // Decompress if it's likely to be compressed
+            }
+            // If we're here, the input must have been a DL URI and scan must be decompressed
+            try {
+              gs1ElementStrings = gs1dlt.gs1digitalLinkToGS1elementStrings(
+                scan,
+                true
+              );
+              gs1DigitalLinkURI = scan;
+            } catch (err) {
+              console.log(err);
+              errmsg = err;
+            }
+          } else {
+            // Hopefully scan is an element string then, which we can convert to a DL URI, remembering to escape reserved characters first
+            try {
+              gs1DigitalLinkURI = doNotEscape
+                ? gs1dlt.gs1ElementStringsToGS1DigitalLink(
+                    scan,
+                    false,
+                    "https://id.gs1.org"
+                  )
+                : gs1dlt.gs1ElementStringsToGS1DigitalLink(
+                    escapeReservedCharacters(scan),
+                    false,
+                    "https://id.gs1.org"
+                  );
+            } catch (err) {
+              console.log(err);
+              errmsg = err;
+            }
+          }
+          //    console.log('We have a DL of ' + gs1DigitalLinkURI);
+        } catch (err) {
+          console.log(err);
+          errmsg = err;
+        }
 
-    // Create a table element
-    const table = document.createElement('table');
-    table.style.width = '100%';
-    table.style.borderCollapse = 'collapse';
+        // Whatever the input, we have a DL or an error. If an error, the value of gs1DigitalLinkURI is undefined
+        if (gs1DigitalLinkURI == undefined) {
+          return { errmsg: errmsg };
+        } else {
+          try {
+            gs1Array = gs1dlt.extractFromGS1digitalLink(gs1DigitalLinkURI);
+          } catch (err) {
+            console.log(err);
+            return { errmsg: err }; // Quit here if we have an error
+          }
 
-    // Create table header
-    const headerRow = table.insertRow();
-    const headerCell1 = document.createElement('th');
-    const headerCell2 = document.createElement('th');
-    headerCell1.innerText = 'Identifier';
-    headerCell2.innerText = 'Data';
-    headerRow.appendChild(headerCell1);
-    headerRow.appendChild(headerCell2);
+          // Want to find the primary identifier
+          // We'll use the aitable
+          let done = []; // Use this to keep track of what we've done
+          for (i in gs1Array.GS1) {
+            if (gs1dlt.aitable.find((x) => x.ai === i).type === "I") {
+              primaryKey = i;
+              console.log(
+                `Primary key is ${primaryKey} and its value is ${gs1Array.GS1[primaryKey]}`
+              );
+              dlOrderedAIlist.push(
+                getAIElement(i, gs1dlt, gs1Array.GS1, dateAIs)
+              );
+              done.push(i);
+            }
+          }
+          if (gs1dlt.aiQualifiers[primaryKey] !== undefined) {
+            gs1dlt.aiQualifiers[primaryKey].forEach(function (i) {
+              if (gs1Array.GS1[i] !== undefined) {
+                dlOrderedAIlist.push(
+                  getAIElement(i, gs1dlt, gs1Array.GS1, dateAIs)
+                );
+                done.push(i);
+              }
+            });
+          }
+          //console.log(dlOrderedAIlist); // These are the ones we have already got. We need to get the rest but these can be in any order
+          for (i in gs1Array.GS1) {
+            if (!done.includes(i)) {
+              dlOrderedAIlist.push(
+                getAIElement(i, gs1dlt, gs1Array.GS1, dateAIs)
+              );
+              done.push(i);
+            }
+          }
+          for (i in gs1Array.other) {
+            // These are the non-GS1 elements that can occur in a DL URI. We don't know the labels
+            if (!dlOrderedAIlist.includes(i)) {
+              let temp = {};
+              temp["ai"] = i;
+              temp["value"] = gs1Array.other[i];
+              dlOrderedAIlist.push(temp);
+              done.push(i);
+            }
+          }
+          let returnObject = sortElementString(gs1Array.GS1);
+          returnObject["ol"] = dlOrderedAIlist;
+          returnObject["dl"] = gs1DigitalLinkURI;
+          returnObject["licensingMO"] = await getLicensingMO(
+            primaryKey,
+            gs1Array.GS1[primaryKey]
+          );
+          console.log(returnObject);
+          return returnObject;
+        }
+      }
 
-    // Populate the table with data
-    data.forEach(item => {
-        const row = table.insertRow();
-        const cell1 = row.insertCell();
-        const cell2 = row.insertCell();
-        cell1.innerText = item.name;
-        cell2.innerText = item.value;
+      function getAIElement(e, gs1dlt, values, dateAIs) {
+        ro = {};
+        ro["ai"] = e;
+        ro["label"] = gs1dlt.aitable.find((x) => x.ai === e).label;
+        ro["value"] = dateAIs.includes(e) ? gs1ToISO(values[e]) : values[e];
+        return ro;
+      }
 
-        // Style the cells
-        cell1.style.border = '1px solid #ddd';
-        cell2.style.border = '1px solid #ddd';
-        cell1.style.padding = '8px';
-        cell2.style.padding = '8px';
-    });
+      function sortElementString(a) {
+        // This creates two GS1 element string versions of the given array, one with brackets, one with FNC1
+        // Order is:
+        // Primary key
+        // Fixed length
+        // The rest
 
-    return table;
-}
+        let gs1dlt = new GS1DigitalLinkToolkit();
+        let sortedBrackets = "";
+        let sortedFNC1 = "";
+        //  const FNC1 = String.fromCharCode(29);
+        const FNC1 = gs1dlt.groupSeparator;
+        for (i in a) {
+          // Look for the primary key
+          if (gs1dlt.aitable.find((x) => x.ai == i).type == "I") {
+            sortedBrackets = "(" + i + ")" + a[i];
+            sortedFNC1 = FNC1 + i + a[i];
+          }
+        }
+        for (i in a) {
+          // Look for fixed length AIs
+          if (
+            sortedBrackets.indexOf("(" + i + ")") == -1 &&
+            gs1dlt.aitable.find((x) => x.ai == i).fixedLength == true
+          ) {
+            sortedBrackets += "(" + i + ")" + a[i];
+            sortedFNC1 += i + a[i];
+          }
+        }
+        for (i in a) {
+          // Everything else
+          if (sortedBrackets.indexOf("(" + i + ")") == -1) {
+            sortedBrackets += "(" + i + ")" + a[i];
+            sortedFNC1 += i + a[i] + FNC1;
+          }
+        }
+        if (sortedFNC1.lastIndexOf(FNC1) == sortedFNC1.length - 1) {
+          sortedFNC1 = sortedFNC1.substring(0, sortedFNC1.length - 1);
+        }
+        console.log(sortedBrackets);
+        console.log(sortedFNC1);
+        return { AIbrackets: sortedBrackets, AIfnc1: sortedFNC1 };
+      }
+      function gs1ToISO(gs1Date) {
+        let rv = "";
+        let regexDate = new RegExp("^\\d{6}$");
+        if (gs1Date !== undefined && regexDate.test(gs1Date)) {
+          let doubleDigits = gs1Date.split(/(\d{2})/);
+          let year = parseInt(doubleDigits[1]);
+          let currentYear = new Date().getFullYear().toString();
+          let currentLastYY = parseInt(currentYear.substr(-2));
+          let currentFirstYY = parseInt(currentYear.substr(0, 2));
+          let diff = year - currentLastYY;
+          let fullyear = currentFirstYY.toString() + year.toString();
+          if (diff >= 51 && diff <= 99) {
+            fullyear = (currentFirstYY - 1).toString() + year.toString();
+          }
+          if (diff >= -99 && diff <= -50) {
+            fullyear = (currentFirstYY + 1).toString() + year.toString();
+          }
+          if (fullyear !== undefined) {
+            rv = fullyear + "-" + doubleDigits[3];
+            if (doubleDigits[5] != "00") {
+              rv += "-" + doubleDigits[5];
+            }
+          }
+        }
+        return rv;
+      }
 
+      // encodeURIComponent is too general. In particular, it will percent-encode the FNC1 character in an element string
+      // So this little function just %-encodes the ones we actually need to. There's probably a fancy way of doing this with
+      // a single regex but, well... I hope you'll forgive the verbosity.
+      function escapeReservedCharacters(str) {
+        str = str.replace("#", "%23");
+        str = str.replace("/", "%2F");
+        str = str.replace("%", "%25");
+        str = str.replace("&", "%26");
+        str = str.replace("+", "%2B");
+        str = str.replace(",", "%2C");
+        str = str.replace("!", "%21");
+        str = str.replace("(", "%28");
+        str = str.replace(")", "%29");
+        str = str.replace("*", "%2A");
+        str = str.replace("'", "%27");
+        str = str.replace(":", "%3A");
+        str = str.replace(";", "%3B");
+        str = str.replace("<", "%3C");
+        str = str.replace("=", "%3D");
+        str = str.replace("<", "%3E");
+        str = str.replace("?", "%3F");
+        return str;
+      }
+
+      const getLicensingMO = async (primaryKey, pkValue) => {
+        let mo;
+        /* We need the list of MO prefixes which comes from a separate file */
+        await fetch(
+          "https://gs1.github.io/interpretGS1scan/MOprefixStrings.json"
+        )
+          .then((response) => response.json())
+          .then((moPrefixes) => {
+            const offset = primaryKey === "01" ? 1 : 0;
+            mo = moPrefixes.find(
+              (x) =>
+                x.prefix === pkValue.substring(offset, x.prefix.length + offset)
+            ).mo;
+          });
+        return mo;
+      };
+
+      const getCoO = async (numeric) => {
+        let country;
+        /* We need the list of numeric country codes which comes from a separate file */
+        /* Original source is https://github.com/lukes/ISO-3166-Countries-with-Regional-Codes */
+        await fetch("https://gs1.github.io/interpretGS1scan/slim-2.json")
+          .then((response) => response.json())
+          .then((isoCodes) => {
+            country = isoCodes.find((x) => x["country-code"] === numeric).name;
+          });
+        return `${numeric} (${country})`;
+      };
+
+      async function displayInterpretation(scan, outputNode) {
+        let scanObj = await interpretScan(scan);
+        outputNode.innerHTML = "";
+
+        // We can test whether we have any errors at this point by looking for a value of errmsg
+
+        if (scanObj.errmsg !== undefined) {
+          console.log("From GS1 Digital Link toolkit: " + scanObj.errmsg);
+          let p = document.createElement("p");
+          p.classList.add("error");
+          p.appendChild(document.createTextNode(scanObj.errmsg));
+          outputNode.appendChild(p);
+        } else {
+          let label = document.createElement("label");
+          label.classList.add("sectionHeader");
+          label.htmlFor = "identifiers";
+          label.appendChild(document.createTextNode("GS1 identifiers"));
+          outputNode.appendChild(label);
+          let div = document.createElement("div");
+          div.id = "identifiers";
+          for (i in scanObj.ol) {
+            // scanObj.ol is the ordered list we want to go through
+            let p = document.createElement("p");
+            p.id = "_" + scanObj.ol[i].ai;
+            p.classList.add("aiDisplay");
+            let span = document.createElement("span");
+            span.classList.add("ai");
+            let ai = scanObj.ol[i].ai == undefined ? "" : scanObj.ol[i].ai;
+            span.appendChild(document.createTextNode(ai));
+            p.appendChild(span);
+            span = document.createElement("span");
+            span.classList.add("aiLabel");
+            label = scanObj.ol[i].label == undefined ? "" : scanObj.ol[i].label;
+            span.appendChild(document.createTextNode(label));
+            p.appendChild(span);
+            span = document.createElement("span");
+            p.appendChild(span);
+            span = document.createElement("span");
+            span.classList.add("aiValue");
+            let v = "";
+            if (scanObj.ol[i].value !== undefined) {
+              v =
+                scanObj.ol[i].ai === "422"
+                  ? await getCoO(scanObj.ol[i].value)
+                  : decodeURIComponent(scanObj.ol[i].value);
+            }
+            span.appendChild(document.createTextNode(v));
+            p.appendChild(span);
+            div.appendChild(p);
+          }
+          outputNode.appendChild(div);
+
+          // Now we want to show the different formats of the scanned string.
+
+          label = document.createElement("label");
+          label.htmlFor = "syntaxes";
+          label.classList.add("sectionHeader");
+          label.appendChild(document.createTextNode("Equivalent identifiers"));
+          outputNode.appendChild(label);
+          div = document.createElement("div");
+          div.id = "syntaxes";
+          let p = document.createElement("p");
+          label = document.createElement("label");
+          label.htmlFor = "aiBrackets";
+          label.appendChild(
+            document.createTextNode("Human-readable AI syntax")
+          );
+          let span = document.createElement("span");
+          span.classList.add("syntax");
+          span.id = "aiBrackets";
+          span.appendChild(
+            document.createTextNode(decodeURIComponent(scanObj.AIbrackets))
+          );
+          p.appendChild(label);
+          p.appendChild(span);
+          div.appendChild(p);
+
+          p = document.createElement("p");
+          label = document.createElement("label");
+          label.htmlFor = "aiFNC1";
+          label.appendChild(document.createTextNode("Native AI syntax"));
+          span = document.createElement("span");
+          span.classList.add("syntax");
+          span.id = "aiFNC1";
+          span.appendChild(
+            document.createTextNode(decodeURIComponent(scanObj.AIfnc1))
+          );
+          p.appendChild(label);
+          p.appendChild(span);
+          div.appendChild(p);
+
+          p = document.createElement("p");
+          label = document.createElement("label");
+          label.htmlFor = "dl";
+          label.appendChild(document.createTextNode("GS1 Digital Link URI"));
+          span = document.createElement("span");
+          span.classList.add("syntax");
+          span.id = "dl";
+          let a = document.createElement("a");
+          a.href = scanObj.dl;
+          a.appendChild(document.createTextNode(scanObj.dl));
+          span.appendChild(a);
+          p.appendChild(label);
+          p.appendChild(span);
+          div.appendChild(p);
+
+          outputNode.appendChild(div);
+
+          label = document.createElement("label");
+          label.htmlFor = "licensingMO";
+          label.classList.add("sectionHeader");
+          label.appendChild(
+            document.createTextNode("Licensing GS1 Member Organisation")
+          );
+          outputNode.appendChild(label);
+          div = document.createElement("div");
+          div.id = "licensingMO";
+          p = document.createElement("p");
+          p.appendChild(document.createTextNode(scanObj.licensingMO));
+          div.appendChild(p);
+
+          outputNode.appendChild(div);
+        }
+      }
+
+      function isPlausibleGs1DlUri(s) {
+        const RE1 =
+          /^https?:(\/\/((([^\/?#]*)@)?([^\/?#:]*)(:([^\/?#]*))?))?([^?#]*)(((\/(01|gtin|8006|itip|8013|gmn|8010|cpid|414|gln|417|party|8017|gsrnp|8018|gsrn|255|gcn|00|sscc|253|gdti|401|ginc|402|gsin|8003|grai|8004|giai)\/)(\d{4}[^\/]+)(\/[^/]+\/[^/]+)?[/]?(\?([^?\n]*))?(#([^\n]*))?))/;
+        const RE2 =
+          /^https?:(\/\/((([^\/?#]*)@)?([^\/?#:]*)(:([^\/?#]*))?))?([^?#]*)(((\/(01|8006|8013|8010|414|417|8017|8018|255|00|253|401|402|8003|8004)\/)(\d{4}[^\/]+)(\/[^/]+\/[^/]+)?[/]?(\?([^?\n]*))?(#([^\n]*))?))/;
+        const RE3 =
+          /^https?:(\/\/((([^\/?#]*)@)?([^\/?#:]*)(:([^\/?#]*))?))?([^?#]*)((\/[0-9A-Za-z_-]{10,}$))/;
+        let op = {};
+        op.uncompressedWithAlphas = RE1.test(s); // true if string plausibly is an uncomprssed DL URI. Allows primary key to be defined using a convenience alpha (e.g. 'gtin')
+        op.uncompressed = RE2.test(s); // true if string plausibly is an uncomprssed DL URI. Convenience alphas not allowed for primary key. *Assumes* but does not check key qualifiers are also numeric only
+        op.compressed = RE3.test(s); // true if string plausibly is a compressed DL URI. Please note that this is a weaker test than the prevous two.
+        op.any = op.uncompressedWithAlphas || op.compressed; // true if either 1 or 3 is true
+        op.anyNoAlphas = op.uncompressed || op.compressed; // true if either 2 or 3 is true
+        console.log(op);
+        return op;
+      }
+
+      //////////////////////////////////////
     </script>
-</body>
+  </body>
 </html>
