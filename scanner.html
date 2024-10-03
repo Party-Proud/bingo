@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Matrix Code Scanner</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+
+        #video {
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: 20px;
+        }
+
+        #result {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 10px;
+            cursor: pointer;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Data Matrix Code Scanner</h1>
+    
+    <video id="video" class="hidden"></video>
+    <div id="result">Data Matrix code will be displayed here</div>
+    
+    <button id="startBtn">Start Scanning</button>
+    <button id="cancelBtn" class="hidden">Cancel</button>
+
+    <script src="https://unpkg.com/@zxing/library@latest"></script>
+
+    <script>
+        const video = document.getElementById('video');
+        const resultDiv = document.getElementById('result');
+        const startBtn = document.getElementById('startBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+
+        let scanner = new ZXing.BrowserMultiFormatReader();
+        let scanning = false;
+
+        // Start Scanning
+        startBtn.addEventListener('click', async () => {
+            startBtn.classList.add('hidden');
+            cancelBtn.classList.remove('hidden');
+            resultDiv.textContent = "Scanning for Data Matrix code...";
+
+            try {
+                scanning = true;
+                scanner.decodeFromVideoDevice(null, 'video', (result, err) => {
+                    if (result) {
+                        if (result.getBarcodeFormat() === ZXing.BarcodeFormat.DATA_MATRIX) {
+                            const rawText = result.getText();
+                            const formattedText = formatGS1(rawText);
+                            console.log("raw: " + rawText);
+                            //resultDiv.textContent = `Data Matrix Code Found: ${formattedText}`;
+                            document.getElementById('result').appendChild(formatDataToTable(rawText));
+
+                            
+                            stopScanning();
+                        }
+                    } else if (err && !(err instanceof ZXing.NotFoundException)) {
+                        resultDiv.textContent = `Error: ${err}`;
+                    }
+                });
+                video.classList.remove('hidden');
+            } catch (err) {
+                resultDiv.textContent = `Error accessing camera: ${err.message}`;
+            }
+        });
+
+        // Cancel Scanning
+        cancelBtn.addEventListener('click', cancelScanning);
+
+        function cancelScanning() {
+            resultDiv.textContent = "Data Matrix code will be displayed here";
+            stopScanning();
+        }
+        
+        function stopScanning() {
+            scanning = false;
+            video.classList.add('hidden');
+            startBtn.classList.remove('hidden');
+            cancelBtn.classList.add('hidden');
+            scanner.reset();
+        }
+
+        function formatDataToTable(unstructuredData) {
+    // Extract data using regex for GS1 Application Identifiers
+    const regex = /(\d{2})(\d+)/g; // Matches (AI)(data)
+    const data = [];
+    let match;
+
+    // Extract the GTIN, Production Date, and Batch Number
+    while ((match = regex.exec(unstructuredData)) !== null) {
+        const ai = match[1];
+        const value = match[2];
+
+        switch (ai) {
+            case '01':
+                data.push({ name: '(01) GTIN', value: value });
+                break;
+            case '11':
+                // Format production date to YYYY-MM-DD
+                const productionDate = value.substring(0, 2) + '-' + value.substring(2, 4) + '-' + value.substring(4, 6);
+                data.push({ name: '(11) Production Date', value: productionDate });
+                break;
+            case '10':
+                data.push({ name: '(10) Batch Number', value: value });
+                break;
+        }
+    }
+
+    // Create a table element
+    const table = document.createElement('table');
+    table.style.width = '100%';
+    table.style.borderCollapse = 'collapse';
+
+    // Create table header
+    const headerRow = table.insertRow();
+    const headerCell1 = document.createElement('th');
+    const headerCell2 = document.createElement('th');
+    headerCell1.innerText = 'Identifier';
+    headerCell2.innerText = 'Data';
+    headerRow.appendChild(headerCell1);
+    headerRow.appendChild(headerCell2);
+
+    // Populate the table with data
+    data.forEach(item => {
+        const row = table.insertRow();
+        const cell1 = row.insertCell();
+        const cell2 = row.insertCell();
+        cell1.innerText = item.name;
+        cell2.innerText = item.value;
+
+        // Style the cells
+        cell1.style.border = '1px solid #ddd';
+        cell2.style.border = '1px solid #ddd';
+        cell1.style.padding = '8px';
+        cell2.style.padding = '8px';
+    });
+
+    return table;
+}
+
+    </script>
+</body>
+</html>
