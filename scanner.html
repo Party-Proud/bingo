@@ -62,6 +62,7 @@
 
       let scanner = new ZXing.BrowserMultiFormatReader();
       let scanning = false;
+      let selectedDeviceId = null
       async function listFuncVideoInputDevices() {
       const devices = await navigator.mediaDevices.enumerateDevices();
       return devices.filter(device => device.kind === "videoinput");
@@ -71,7 +72,7 @@
       const listVideoInputDevices = await scanner.listVideoInputDevices();
       //const listVideoInputDevices = await listFuncVideoInputDevices();
       console.log("OUT: " + JSON.stringify(listVideoInputDevices));
-      let selectedDeviceId = listVideoInputDevices[0].deviceId;
+      selectedDeviceId = listVideoInputDevices[0].deviceId;
       //let selectedDeviceId = null;
 
       listVideoInputDevices.forEach((device, index) => {
