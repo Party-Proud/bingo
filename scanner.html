@@ -42,11 +42,11 @@
     </style>
   </head>
   <body>
-    <h1>DIR Scanner v2</h1>
+    <h1>DIR Scanner v2.1</h1>
 
     <div id="deviceButtons"></div>
     <video id="video" class="hidden"></video>
-    <div id="result">Data Matrix code will be displayed here</div>
+    <div id="result"></div>
 
     <button id="startBtn">Start Scanning</button>
     <button id="cancelBtn" class="hidden">Cancel</button>
@@ -68,8 +68,8 @@
     }
 
     window.addEventListener('load', async function () {
-      //const listVideoInputDevices = await scanner.listVideoInputDevices();
-      const listVideoInputDevices = await listFuncVideoInputDevices();
+      const listVideoInputDevices = await scanner.listVideoInputDevices();
+      //const listVideoInputDevices = await listFuncVideoInputDevices();
       console.log("OUT: " + JSON.stringify(listVideoInputDevices));
       let selectedDeviceId = listVideoInputDevices[0].deviceId;
       //let selectedDeviceId = null;
