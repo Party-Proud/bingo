@@ -42,7 +42,7 @@
     </style>
   </head>
   <body>
-    <h1>Data Matrix Code Scanner v2</h1>
+    <h1>DIR Scanner v2</h1>
 
     <video id="video" class="hidden"></video>
     <div id="result">Data Matrix code will be displayed here</div>
@@ -60,6 +60,16 @@
 
       let scanner = new ZXing.BrowserMultiFormatReader();
       let scanning = false;
+      let selectedDeviceId = null;
+
+      // Function to stop scanning
+      function stopScanning() {
+        scanner.reset();
+        scanning = false;
+        startBtn.classList.remove("hidden");
+        cancelBtn.classList.add("hidden");
+        video.classList.add("hidden");
+      }
 
       // Start Scanning
       startBtn.addEventListener("click", async () => {
@@ -69,51 +79,106 @@
 
         try {
           scanning = true;
-          scanner.decodeFromVideoDevice(null, "video", async (result, err) => {
-            if (result) {
-              if (
-                result.getBarcodeFormat() === ZXing.BarcodeFormat.DATA_MATRIX
-              ) {
-                const rawText = result.getText();
-                console.log("raw: " + rawText);
-                //resultDiv.textContent = `Data Matrix Code Found: ${formattedText}`;
+          // Get video input devices
+          const videoInputDevices = await scanner.getVideoInputDevices();
+          // Select the first available camera
+          selectedDeviceId = videoInputDevices[0].deviceId;
 
-                // Example Usage:
-                const decoded = await interpretScan(rawText);
-                console.log("decoded 1: " + decoded);
-                //resultDiv.textContent = `Decoded Data: ${JSON.stringify(
-                //  decoded
-                //)}`;
+          // Start decoding from the selected video device
+          scanner.decodeFromVideoDevice(
+            selectedDeviceId,
+            "video",
+            async (result, err) => {
+              if (result) {
+                if (
+                  result.getBarcodeFormat() === ZXing.BarcodeFormat.DATA_MATRIX
+                ) {
+                  const rawText = result.getText();
+                  console.log("raw: " + rawText);
 
-                                const pc = decoded.ol.find((item) => item.ai === "01").value;
-                
-                const pc_lookup_array = [
-                  { pc: "06009544004714", ref: "DCC4013", manufacture: "Southern Implants", type: "Implant", name: "Deep Conical Implant", desc: "4 x 13mm Parallel Walled Implant" },
-                  { pc: "07630031707024", ref: "021.5308", manufacture: "Straumann", type: "Implant", name: "Bone Level Tapered Implant", desc: "4.1mm RC, SLActive 8mm, Roxolid, Loxim" },
-                  { pc: "07830031707048", ref: "021.5312", manufacture: "Straumann", type: "Implant", name: "Bone Level Tapered Implant", desc: "4.1mm RC, SLActive 12mm, Roxolid, Loxim" },
-                  { pc: "07630031707437", ref: "021.7308", manufacture: "Straumann", type: "Implant", name: "Bone Level Tapered Implant", desc: "4.8mm RC, SLActive 8mm, Roxolid, Loxim" },
-                ];
-                
-                const product = pc_lookup_array.find(item => item.pc === pc);
-                
-                resultDiv.innerHTML = `<h3>Decoded Data</h3>
-                  <b>Product Code:</b> ${pc} <br>
-                  <b>Batch/Lot:</b> ${decoded.ol.find((item) => item.ai === "10").value} <br>
-                  <b>Expiry Date:</b> ${decoded.ol.find((item) => item.ai === "17").value} <br>
-                  ${product ? `
-                    <b>Reference:</b> ${product.ref} <br>
-                    <b>Manufacture:</b> ${product.manufacture} <br>
-                    <b>Type:</b> ${product.type} <br>
-                    <b>Name:</b> ${product.name} <br>
-                    <b>Description:</b> ${product.desc} <br>
-                  ` : '<b>Product details not found.</b>'}
-                `;
-                stopScanning();
-              }
-            } else if (err && !(err instanceof ZXing.NotFoundException)) {
-              resultDiv.textContent = `Error: ${err}`;
+                  // Example Usage:
+                  const decoded = await interpretScan(rawText);
+                  console.log("decoded 1: " + decoded);
+
+                  const pc = decoded.ol.find((item) => item.ai === "01").value;
+
+                  const pc_lookup_array = [
+                    {
+                      pc: "06009544004714",
+                      ref: "DCC4013",
+                      manufacture: "Southern Implants",
+                      type: "Implant",
+                      name: "Deep Conical Implant",
+                      desc: "4 x 13mm Parallel Walled Implant",
+                    },
+                    {
+                      pc: "07630031707024",
+                      ref: "021.5308",
+                      manufacture: "Straumann",
+                      type: "Implant",
+                      name: "Bone Level Tapered Implant",
+                      desc: "4.1mm RC, SLActive 8mm, Roxolid, Loxim",
+                    },
+                    {
+                      pc: "07830031707048",
+                      ref: "021.5312",
+                      manufacture: "Straumann",
+                      type: "Implant",
+                      name: "Bone Level Tapered Implant",
+                      desc: "4.1mm RC, SLActive 12mm, Roxolid, Loxim",
+                    },
+                    {
+                      pc: "07630031707437",
+                      ref: "021.7308",
+                      manufacture: "Straumann",
+                      type: "Implant",
+                      name: "Bone Level Tapered Implant",
+                      desc: "4.8mm RC, SLActive 8mm, Roxolid, Loxim",
+                    },
+                  ];
+
+                  const product = pc_lookup_array.find(
+                    (item) => item.pc === pc
+                  );
+
+                  resultDiv.innerHTML = `<h3>Decoded Data</h3>
+            <b>Product Code:</b> ${pc} <br>
+            <b>Batch/Lot:</b> ${
+              decoded.ol.find((item) => item.ai === "10").value
+            } <br>
+            <b>Expiry Date:</b> ${
+              decoded.ol.find((item) => item.ai === "17").value
+            } <br>
+            ${
+              product
+                ? `
+              <b>Reference:</b> ${product.ref} <br>
+              <b>Manufacture:</b> ${product.manufacture} <br>
+              <b>Type:</b> ${product.type} <br>
+              <b>Name:</b> ${product.name} <br>
+              <b>Description:</b> ${product.desc} <br>
+            `
+                : "<b>Product details not found.</b>"
             }
+          `;
+                  stopScanning();
+                }
+              } else if (err && !(err instanceof ZXing.NotFoundException)) {
+                resultDiv.textContent = `Error: ${err}`;
+              }
+            }
+          );
+
+          // Apply continuous focus mode if the browser and device support it
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              deviceId: selectedDeviceId,
+              focusMode: { ideal: "continuous" }, // Try setting continuous focus
+            },
           });
+
+          // Set the video element to use the stream
+          video.srcObject = stream;
           video.classList.remove("hidden");
         } catch (err) {
           resultDiv.textContent = `Error accessing camera: ${err.message}`;
