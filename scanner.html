@@ -37,7 +37,7 @@
       }
 
       .hidden {
-        display: none;
+        display: none !important;
       }
 
       .button-container {
@@ -75,7 +75,7 @@
     </style>
   </head>
   <body>
-    <h1>DIR Scanner v2.1.9</h1>
+    <h1>DIR Scanner v2.1.11</h1>
 
     <div id="deviceButtons" class="button-container"></div>
     <video id="video" class="hidden"></video>
@@ -135,10 +135,11 @@
         resultDiv.classList.add("hidden");
         cancelBtn.classList.remove("hidden");
         resultDiv.textContent = "Scanning for Data Matrix code...";
+        deviceButtons.classList.add("hidden");
 
         try {
           scanning = true;
-          deviceButtons.classList.add("hidden");
+         
           // Get video input devices
           //const videoInputDevices = await scanner.getVideoInputDevices();
           // Select the first available camera
