@@ -42,7 +42,7 @@
     </style>
   </head>
   <body>
-    <h1>DIR Scanner v2.1.5</h1>
+    <h1>DIR Scanner v2.1.6</h1>
 
     <div id="deviceButtons"></div>
     <video id="video" class="hidden"></video>
@@ -195,7 +195,7 @@
             }
           );
 
-          // Apply continuous focus mode if the browser and device support it
+          /* // Apply continuous focus mode if the browser and device support it
           const stream = await navigator.mediaDevices.getUserMedia({
             video: {
               //deviceId: selectedDeviceId,
@@ -206,6 +206,26 @@
               exposureMode: { ideal: "continuous" },
               whiteBalanceMode: { ideal: "continuous" },
               facingMode: { exact: "environment" }
+            },
+          }); */
+
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              deviceId: selectedDeviceId
+                ? { exact: selectedDeviceId }
+                : undefined, // Use selected device if available
+              width: { ideal: 640 },
+              height: { ideal: 480 },
+              facingMode: { exact: "environment" },
+              // Conditionally include the advanced settings
+              ...(typeof MediaTrackConstraints.prototype.focusMode !==
+                "undefined" && { focusMode: { ideal: "continuous" } }),
+              ...(typeof MediaTrackConstraints.prototype.exposureMode !==
+                "undefined" && { exposureMode: { ideal: "continuous" } }),
+              ...(typeof MediaTrackConstraints.prototype.whiteBalanceMode !==
+                "undefined" && { whiteBalanceMode: { ideal: "continuous" } }),
+              ...(typeof MediaTrackConstraints.prototype.zoom !==
+                "undefined" && { zoom: { ideal: 3.0 } }),
             },
           });
 
