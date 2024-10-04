@@ -44,6 +44,7 @@
   <body>
     <h1>DIR Scanner v2</h1>
 
+    <div id="deviceButtons"></div>
     <video id="video" class="hidden"></video>
     <div id="result">Data Matrix code will be displayed here</div>
 
@@ -57,10 +58,31 @@
       const resultDiv = document.getElementById("result");
       const startBtn = document.getElementById("startBtn");
       const cancelBtn = document.getElementById("cancelBtn");
+      const deviceButtons = document.getElementById("deviceButtons");
 
       let scanner = new ZXing.BrowserMultiFormatReader();
       let scanning = false;
-      let selectedDeviceId = null;
+      async function listFuncVideoInputDevices() {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      return devices.filter(device => device.kind === "videoinput");
+    }
+
+    window.addEventListener('load', async function () {
+      //const listVideoInputDevices = await scanner.listVideoInputDevices();
+      const listVideoInputDevices = await listFuncVideoInputDevices();
+      console.log("OUT: " + JSON.stringify(listVideoInputDevices));
+      let selectedDeviceId = listVideoInputDevices[0].deviceId;
+      //let selectedDeviceId = null;
+
+      listVideoInputDevices.forEach((device, index) => {
+        const button = document.createElement("button");
+        button.textContent = device.label || `Camera ${index + 1}`;
+        button.addEventListener("click", () => {
+          selectedDeviceId = device.deviceId;
+        });
+        deviceButtons.appendChild(button);
+      });
+    });
 
       // Function to stop scanning
       function stopScanning() {
