@@ -75,7 +75,7 @@
     </style>
   </head>
   <body>
-    <h1>DIR Scanner v2.1.12</h1>
+    <h1>DIR Scanner v2.1.13</h1>
 
     <div id="deviceButtons" class="button-container"></div>
     <video id="video" class="hidden"></video>
@@ -202,7 +202,7 @@
                     (item) => item.pc === pc
                   );
 
-                  resultDiv.innerHTML = `<h3>Decoded Data</h3>
+                  resultDiv.innerHTML = `<h3>Product Data</h3>
             <b>Product Code:</b> ${pc} <br>
             <b>Batch/Lot:</b> ${
               decoded.ol.find((item) => item.ai === "10").value
