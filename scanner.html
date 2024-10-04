@@ -42,7 +42,7 @@
     </style>
   </head>
   <body>
-    <h1>DIR Scanner v2.1</h1>
+    <h1>DIR Scanner v2.1.1</h1>
 
     <div id="deviceButtons"></div>
     <video id="video" class="hidden"></video>
@@ -103,9 +103,9 @@
         try {
           scanning = true;
           // Get video input devices
-          const videoInputDevices = await scanner.getVideoInputDevices();
+          //const videoInputDevices = await scanner.getVideoInputDevices();
           // Select the first available camera
-          selectedDeviceId = videoInputDevices[0].deviceId;
+          //selectedDeviceId = videoInputDevices[0].deviceId;
 
           // Start decoding from the selected video device
           scanner.decodeFromVideoDevice(
