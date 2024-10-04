@@ -42,7 +42,7 @@
     </style>
   </head>
   <body>
-    <h1>DIR Scanner v2.1.1</h1>
+    <h1>DIR Scanner v2.1.3</h1>
 
     <div id="deviceButtons"></div>
     <video id="video" class="hidden"></video>
@@ -60,30 +60,32 @@
       const cancelBtn = document.getElementById("cancelBtn");
       const deviceButtons = document.getElementById("deviceButtons");
 
+      deviceButtons.classList.add("hidden");
+
       let scanner = new ZXing.BrowserMultiFormatReader();
       let scanning = false;
-      let selectedDeviceId = null
+      let selectedDeviceId = null;
       async function listFuncVideoInputDevices() {
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      return devices.filter(device => device.kind === "videoinput");
-    }
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        return devices.filter((device) => device.kind === "videoinput");
+      }
 
-    window.addEventListener('load', async function () {
-      const listVideoInputDevices = await scanner.listVideoInputDevices();
-      //const listVideoInputDevices = await listFuncVideoInputDevices();
-      console.log("OUT: " + JSON.stringify(listVideoInputDevices));
-      selectedDeviceId = listVideoInputDevices[0].deviceId;
-      //let selectedDeviceId = null;
+      window.addEventListener("load", async function () {
+        const listVideoInputDevices = await scanner.listVideoInputDevices();
+        //const listVideoInputDevices = await listFuncVideoInputDevices();
+        console.log("OUT: " + JSON.stringify(listVideoInputDevices));
+        selectedDeviceId = listVideoInputDevices[0].deviceId;
+        //let selectedDeviceId = null;
 
-      listVideoInputDevices.forEach((device, index) => {
-        const button = document.createElement("button");
-        button.textContent = device.label || `Camera ${index + 1}`;
-        button.addEventListener("click", () => {
-          selectedDeviceId = device.deviceId;
+        listVideoInputDevices.forEach((device, index) => {
+          const button = document.createElement("button");
+          button.textContent = device.label || `Camera ${index + 1}`;
+          button.addEventListener("click", () => {
+            selectedDeviceId = device.deviceId;
+          });
+          deviceButtons.appendChild(button);
         });
-        deviceButtons.appendChild(button);
       });
-    });
 
       // Function to stop scanning
       function stopScanning() {
@@ -97,6 +99,7 @@
       // Start Scanning
       startBtn.addEventListener("click", async () => {
         startBtn.classList.add("hidden");
+        resultDiv.classList.add("hidden");
         cancelBtn.classList.remove("hidden");
         resultDiv.textContent = "Scanning for Data Matrix code...";
 
@@ -195,8 +198,14 @@
           // Apply continuous focus mode if the browser and device support it
           const stream = await navigator.mediaDevices.getUserMedia({
             video: {
-              deviceId: selectedDeviceId,
-              focusMode: { ideal: "continuous" }, // Try setting continuous focus
+              //deviceId: selectedDeviceId,
+              focusMode: { ideal: "continuous" }, // Continuous focus mode for better focus on small objects
+              width: { ideal: 640 }, // Reduce resolution to make the image more manageable
+              height: { ideal: 480 },
+              zoom: { ideal: 3.0 },
+              exposureMode: { ideal: "continuous" },
+              whiteBalanceMode: { ideal: "continuous" },
+              facingMode: { ideal: "environment" }
             },
           });
 
@@ -221,6 +230,8 @@
         video.classList.add("hidden");
         startBtn.classList.remove("hidden");
         cancelBtn.classList.add("hidden");
+        resultDiv.classList.remove("hidden");
+
         scanner.reset();
       }
 
