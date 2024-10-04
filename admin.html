@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dental Implant Admin Panel</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f4ff;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        header {
+            background-color: #004080;
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+        nav {
+            margin: 20px 0;
+        }
+        nav a {
+            color: #004080;
+            margin: 0 15px;
+            text-decoration: none;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #004080;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #cce5ff;
+        }
+        .button {
+            background-color: #004080;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            cursor: pointer;
+            margin: 5px;
+        }
+        footer {
+            text-align: center;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Dental Implant Admin Panel</h1>
+</header>
+
+<nav>
+    <a href="#">Home</a>
+    <a href="#">Patients</a>
+    <a href="#">Appointments</a>
+    <a href="#">Reports</a>
+    <a href="#">Settings</a>
+</nav>
+
+<h2>Patient Management</h2>
+<input type="text" placeholder="Search Patients...">
+
+<table>
+    <tr>
+        <th>Patient ID</th>
+        <th>Name</th>
+        <th>Age</th>
+        <th>Gender</th>
+        <th>Treatment Status</th>
+        <th>QR Code</th>
+    </tr>
+    <tr>
+        <td>001</td>
+        <td>John Doe</td>
+        <td>45</td>
+        <td>Male</td>
+        <td>Completed</td>
+        <td><img src="websiteqr.png" alt="QR Code" width="100"></td>
+    </tr>
+    <tr>
+        <td>002</td>
+        <td>Jane Smith</td>
+        <td>38</td>
+        <td>Female</td>
+        <td>Pending</td>
+        <td><img src="websiteqr.png" alt="QR Code" width="100"></td>
+    </tr>
+    <tr>
+        <td>003</td>
+        <td>Michael Johnson</td>
+        <td>50</td>
+        <td>Male</td>
+        <td>Completed</td>
+        <td><img src="websiteqr.png" alt="QR Code" width="100"></td>
+    </tr>
+    <tr>
+        <td>004</td>
+        <td>Emily Davis</td>
+        <td>30</td>
+        <td>Female</td>
+        <td>In Progress</td>
+        <td><img src="websiteqr.png" alt="QR Code" width="100"></td>
+    </tr>
+</table>
+
+<button class="button">Add New Patient</button>
+<button class="button">Export Data</button>
+<button class="button">Generate Reports</button>
+
+<footer>
+    <p>© 2024 Dental Implant Clinic | Privacy Policy | Terms of Service</p>
+</footer>
+
+</body>
+</html>
