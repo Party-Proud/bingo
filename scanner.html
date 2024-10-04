@@ -75,7 +75,7 @@
     </style>
   </head>
   <body>
-    <h1>DIR Scanner v2.1.8</h1>
+    <h1>DIR Scanner v2.1.9</h1>
 
     <div id="deviceButtons" class="button-container"></div>
     <video id="video" class="hidden"></video>
@@ -229,21 +229,21 @@
             }
           );
 
-          /* // Apply continuous focus mode if the browser and device support it
+          // Apply continuous focus mode if the browser and device support it
           const stream = await navigator.mediaDevices.getUserMedia({
             video: {
-              //deviceId: selectedDeviceId,
+              deviceId: selectedDeviceId,
               focusMode: { ideal: "continuous" }, // Continuous focus mode for better focus on small objects
               width: { ideal: 640 }, // Reduce resolution to make the image more manageable
               height: { ideal: 480 },
               zoom: { ideal: 3.0 },
               exposureMode: { ideal: "continuous" },
               whiteBalanceMode: { ideal: "continuous" },
-              facingMode: { exact: "environment" }
+              //facingMode: { exact: "environment" }
             },
-          }); */
+          });
 
-          const stream = await navigator.mediaDevices.getUserMedia({
+       /*    const stream = await navigator.mediaDevices.getUserMedia({
             video: {
               deviceId: selectedDeviceId
                 ? { exact: selectedDeviceId }
@@ -261,7 +261,7 @@
               ...(typeof MediaTrackConstraints.prototype.zoom !==
                 "undefined" && { zoom: { ideal: 3.0 } }),
             },
-          });
+          }); */
 
           // Set the video element to use the stream
           video.srcObject = stream;
