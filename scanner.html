@@ -60,7 +60,7 @@
       const cancelBtn = document.getElementById("cancelBtn");
       const deviceButtons = document.getElementById("deviceButtons");
 
-      deviceButtons.classList.add("hidden");
+      //deviceButtons.classList.add("hidden");
 
       let scanner = new ZXing.BrowserMultiFormatReader();
       let scanning = false;
@@ -198,14 +198,14 @@
           // Apply continuous focus mode if the browser and device support it
           const stream = await navigator.mediaDevices.getUserMedia({
             video: {
-              //deviceId: selectedDeviceId,
+              deviceId: selectedDeviceId,
               focusMode: { ideal: "continuous" }, // Continuous focus mode for better focus on small objects
               width: { ideal: 640 }, // Reduce resolution to make the image more manageable
               height: { ideal: 480 },
               zoom: { ideal: 3.0 },
               exposureMode: { ideal: "continuous" },
               whiteBalanceMode: { ideal: "continuous" },
-              facingMode: { ideal: "environment" }
+              //facingMode: { ideal: "environment" }
             },
           });
 
