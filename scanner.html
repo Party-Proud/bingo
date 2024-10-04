@@ -75,7 +75,7 @@
     </style>
   </head>
   <body>
-    <h1>DIR Scanner v2.1.7</h1>
+    <h1>DIR Scanner v2.1.8</h1>
 
     <div id="deviceButtons" class="button-container"></div>
     <video id="video" class="hidden"></video>
@@ -138,6 +138,7 @@
 
         try {
           scanning = true;
+          deviceButtons.classList.add("hidden");
           // Get video input devices
           //const videoInputDevices = await scanner.getVideoInputDevices();
           // Select the first available camera
@@ -244,12 +245,12 @@
 
           const stream = await navigator.mediaDevices.getUserMedia({
             video: {
-              //deviceId: selectedDeviceId
-              //  ? { exact: selectedDeviceId }
-              //  : undefined, // Use selected device if available
+              deviceId: selectedDeviceId
+                ? { exact: selectedDeviceId }
+                : undefined, // Use selected device if available
               width: { ideal: 640 },
               height: { ideal: 480 },
-              facingMode: { exact: "environment" },
+              //facingMode: { exact: "environment" },
               // Conditionally include the advanced settings
               ...(typeof MediaTrackConstraints.prototype.focusMode !==
                 "undefined" && { focusMode: { ideal: "continuous" } }),
@@ -274,7 +275,7 @@
       cancelBtn.addEventListener("click", cancelScanning);
 
       function cancelScanning() {
-        resultDiv.textContent = "Data Matrix code will be displayed here";
+        resultDiv.textContent = "";
         stopScanning();
       }
 
@@ -284,7 +285,7 @@
         startBtn.classList.remove("hidden");
         cancelBtn.classList.add("hidden");
         resultDiv.classList.remove("hidden");
-
+        deviceButtons.classList.remove("hidden");
         scanner.reset();
       }
 
