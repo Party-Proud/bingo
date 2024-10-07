@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Data Matrix Scanner</title>
+    <script src="https://unpkg.com/@zxing/library@latest"></script>
+  </head>
+  <body>
+    <video id="video" width="300" height="200"></video>
+    <button id="start">Start Scanning</button>
+    <div id="result"></div>
+
+    <script>
+      const codeReader = new ZXing.BrowserMultiFormatReader();
+      const videoElement = document.getElementById("video");
+
+      // check supported types
+
+      if (!("BarcodeDetector" in globalThis)) {
+        console.log("Barcode Detector is not supported by this browser.");
+      } else {
+        console.log("Barcode Detector supported!");
+
+        const barcodeDetector = new BarcodeDetector({
+          formats: ["data_matrix", "pdf417", "qr_code"],
+        });
+        barcodeDetector.getSupportedFormats().then((supportedFormats) => {
+          supportedFormats.forEach((format) => console.log(format));
+        });
+      }
+
+      document.getElementById("start").addEventListener("click", () => {
+        codeReader.decodeFromVideoDevice(null, videoElement, (result, err) => {
+          if (result) {
+            // Check if the result is a Data Matrix code
+            const format = result.getBarcodeFormat();
+            document.getElementById("result").innerText = `format: ${format}`;
+            if (format === ZXing.BarcodeFormat.DATA_MATRIX) {
+              document.getElementById(
+                "result"
+              ).innerText = `Data Matrix Code: ${result.text}`;
+            }
+          }
+          if (err && !(err instanceof ZXing.NotFoundException)) {
+            console.error(err);
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
