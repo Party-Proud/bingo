@@ -41,43 +41,42 @@
       }
 
       .button-container {
-  display: flex;
-  flex-wrap: wrap; /* Allows buttons to wrap onto the next line on smaller screens */
-  justify-content: center; /* Center buttons horizontally */
-  margin: 20px; /* Adds space around the button container */
-}
+        display: flex;
+        flex-wrap: wrap; /* Allows buttons to wrap onto the next line on smaller screens */
+        justify-content: center; /* Center buttons horizontally */
+        margin: 20px; /* Adds space around the button container */
+      }
 
-.button-container button {
-  background-color: #007bff; /* Button background color */
-  color: white; /* Button text color */
-  border: none; /* Remove border */
-  border-radius: 5px; /* Rounded corners */
-  padding: 10px 15px; /* Button padding */
-  margin: 5px; /* Space between buttons */
-  cursor: pointer; /* Pointer cursor on hover */
-  font-size: 16px; /* Font size */
-  transition: background-color 0.3s, transform 0.2s; /* Smooth transition for hover effects */
-}
+      .button-container button {
+        background-color: #007bff; /* Button background color */
+        color: white; /* Button text color */
+        border: none; /* Remove border */
+        border-radius: 5px; /* Rounded corners */
+        padding: 10px 15px; /* Button padding */
+        margin: 5px; /* Space between buttons */
+        cursor: pointer; /* Pointer cursor on hover */
+        font-size: 16px; /* Font size */
+        transition: background-color 0.3s, transform 0.2s; /* Smooth transition for hover effects */
+      }
 
-.button-container button:hover {
-  background-color: #0056b3; /* Darker blue on hover */
-  transform: scale(1.05); /* Slightly grow the button on hover */
-}
+      .button-container button:hover {
+        background-color: #0056b3; /* Darker blue on hover */
+        transform: scale(1.05); /* Slightly grow the button on hover */
+      }
 
-@media (max-width: 600px) {
-  .button-container button {
-    font-size: 14px; /* Smaller font size for mobile */
-    padding: 8px 12px; /* Adjust padding for mobile */
-  }
-}
-
-
+      @media (max-width: 600px) {
+        .button-container button {
+          font-size: 14px; /* Smaller font size for mobile */
+          padding: 8px 12px; /* Adjust padding for mobile */
+        }
+      }
     </style>
   </head>
   <body>
-    <h1>DIR Scanner v2.1.13</h1>
+    <h1>DIR Scanner v2.1.14</h1>
 
-    <div id="deviceButtons" class="button-container"></div>
+    <div id="deviceButtons" class="deviceButtons"></div>
+
     <video id="video" class="hidden"></video>
     <div id="result"></div>
 
@@ -90,12 +89,12 @@
       const video = document.getElementById("video");
       const resultDiv = document.getElementById("result");
       const startBtn = document.getElementById("startBtn");
+      startBtn.classList.add("hidden");
       const cancelBtn = document.getElementById("cancelBtn");
       const deviceButtons = document.getElementById("deviceButtons");
 
-      //deviceButtons.classList.add("hidden");
-
-      let scanner = new ZXing.BrowserMultiFormatReader();
+      //let scanner = new ZXing.BrowserMultiFormatReader();
+      let scanner = new ZXing.BrowserQRCodeReader();
       let scanning = false;
       let selectedDeviceId = null;
       async function listFuncVideoInputDevices() {
@@ -104,17 +103,36 @@
       }
 
       window.addEventListener("load", async function () {
-        const listVideoInputDevices = await scanner.listVideoInputDevices();
+        await loadCamerasAndGetPermissions()
+          .then((devices) => {
+            if (devices.length) {
+              console.log("Media devices found:", devices);
+              listVideoInputDevices = devices;
+            } else {
+              console.log("No media devices found or access denied.");
+            }
+          })
+          .catch((error) => {
+            // Handle the thrown error by updating the text field with id 'screenError'
+            resultDiv.innerText = `Error: ${error.message}`;
+            resultDiv.classList.remove("hidden");
+            console.error("Error caught:", error.message);
+          });
+
+        //const listVideoInputDevices = await scanner.listVideoInputDevices();
         //const listVideoInputDevices = await listFuncVideoInputDevices();
-        console.log("OUT: " + JSON.stringify(listVideoInputDevices));
-        selectedDeviceId = listVideoInputDevices[0].deviceId;
+        //console.log("OUT: " + JSON.stringify(listVideoInputDevices));
+        //selectedDeviceId = listVideoInputDevices[0].deviceId;
         //let selectedDeviceId = null;
 
         listVideoInputDevices.forEach((device, index) => {
           const button = document.createElement("button");
-          button.textContent = device.label || `Camera ${index + 1}`;
+          const lbl = device.label || `Camera ${index + 1}`;
+          button.textContent = lbl;
           button.addEventListener("click", () => {
             selectedDeviceId = device.deviceId;
+            resultDiv.textContent = `Selected: ${lbl}`;
+            startBtn.classList.remove("hidden");
           });
           deviceButtons.appendChild(button);
         });
@@ -129,7 +147,7 @@
         video.classList.add("hidden");
       }
 
-      // Start Scanning
+      // Start Scanning on click of START button
       startBtn.addEventListener("click", async () => {
         startBtn.classList.add("hidden");
         resultDiv.classList.add("hidden");
@@ -139,136 +157,68 @@
 
         try {
           scanning = true;
-         
-          // Get video input devices
-          //const videoInputDevices = await scanner.getVideoInputDevices();
-          // Select the first available camera
-          //selectedDeviceId = videoInputDevices[0].deviceId;
-
-          // Start decoding from the selected video device
-          scanner.decodeFromVideoDevice(
-            selectedDeviceId,
-            "video",
-            async (result, err) => {
-              if (result) {
-                if (
-                  result.getBarcodeFormat() === ZXing.BarcodeFormat.DATA_MATRIX
-                ) {
-                  const rawText = result.getText();
-                  console.log("raw: " + rawText);
-
-                  // Example Usage:
-                  const decoded = await interpretScan(rawText);
-                  console.log("decoded 1: " + decoded);
-
-                  const pc = decoded.ol.find((item) => item.ai === "01").value;
-
-                  const pc_lookup_array = [
-                    {
-                      pc: "06009544004714",
-                      ref: "DCC4013",
-                      manufacture: "Southern Implants",
-                      type: "Implant",
-                      name: "Deep Conical Implant",
-                      desc: "4 x 13mm Parallel Walled Implant",
-                    },
-                    {
-                      pc: "07630031707024",
-                      ref: "021.5308",
-                      manufacture: "Straumann",
-                      type: "Implant",
-                      name: "Bone Level Tapered Implant",
-                      desc: "4.1mm RC, SLActive 8mm, Roxolid, Loxim",
-                    },
-                    {
-                      pc: "07630031707048",
-                      ref: "021.5312",
-                      manufacture: "Straumann",
-                      type: "Implant",
-                      name: "Bone Level Tapered Implant",
-                      desc: "4.1mm RC, SLActive 12mm, Roxolid, Loxim",
-                    },
-                    {
-                      pc: "07630031707437",
-                      ref: "021.7308",
-                      manufacture: "Straumann",
-                      type: "Implant",
-                      name: "Bone Level Tapered Implant",
-                      desc: "4.8mm RC, SLActive 8mm, Roxolid, Loxim",
-                    },
-                  ];
-
-                  const product = pc_lookup_array.find(
-                    (item) => item.pc === pc
-                  );
-
-                  resultDiv.innerHTML = `<h3>Product Data</h3>
-            <b>Product Code:</b> ${pc} <br>
-            <b>Batch/Lot:</b> ${
-              decoded.ol.find((item) => item.ai === "10").value
-            } <br>
-            <b>Expiry Date:</b> ${
-              decoded.ol.find((item) => item.ai === "17").value
-            } <br>
-            ${
-              product
-                ? `
-              <b>Reference:</b> ${product.ref} <br>
-              <b>Manufacture:</b> ${product.manufacture} <br>
-              <b>Type:</b> ${product.type} <br>
-              <b>Name:</b> ${product.name} <br>
-              <b>Description:</b> ${product.desc} <br>
-            `
-                : "<b>Product details not found.</b>"
-            }
-          `;
-                  stopScanning();
-                }
-              } else if (err && !(err instanceof ZXing.NotFoundException)) {
-                resultDiv.textContent = `Error: ${err}`;
-              }
-            }
-          );
 
           // Apply continuous focus mode if the browser and device support it
-          const stream = await navigator.mediaDevices.getUserMedia({
-            video: {
-              deviceId: selectedDeviceId,
-              focusMode: { ideal: "continuous" }, // Continuous focus mode for better focus on small objects
-              width: { ideal: 640 }, // Reduce resolution to make the image more manageable
-              height: { ideal: 480 },
-              zoom: { ideal: 3.0 },
-              exposureMode: { ideal: "continuous" },
-              whiteBalanceMode: { ideal: "continuous" },
-              //facingMode: { exact: "environment" }
-            },
-          });
+          navigator.mediaDevices
+            .getUserMedia({
+              video: {
+                deviceId: selectedDeviceId,
+                focusMode: { ideal: "continuous" }, // Continuous focus mode for better focus on small objects
+                width: { ideal: 640 }, // Reduce resolution to make the image more manageable
+                height: { ideal: 480 },
+                zoom: { ideal: 3.0 },
+                exposureMode: { ideal: "continuous" },
+                whiteBalanceMode: { ideal: "continuous" },
+                //facingMode: { exact: "environment" }
+              },
+            })
+            .then(function (stream) {
+              video.srcObject = stream;
+              video.play();
+              video.classList.remove("hidden");
 
-       /*    const stream = await navigator.mediaDevices.getUserMedia({
-            video: {
-              deviceId: selectedDeviceId
-                ? { exact: selectedDeviceId }
-                : undefined, // Use selected device if available
-              width: { ideal: 640 },
-              height: { ideal: 480 },
-              //facingMode: { exact: "environment" },
-              // Conditionally include the advanced settings
-              ...(typeof MediaTrackConstraints.prototype.focusMode !==
-                "undefined" && { focusMode: { ideal: "continuous" } }),
-              ...(typeof MediaTrackConstraints.prototype.exposureMode !==
-                "undefined" && { exposureMode: { ideal: "continuous" } }),
-              ...(typeof MediaTrackConstraints.prototype.whiteBalanceMode !==
-                "undefined" && { whiteBalanceMode: { ideal: "continuous" } }),
-              ...(typeof MediaTrackConstraints.prototype.zoom !==
-                "undefined" && { zoom: { ideal: 3.0 } }),
-            },
-          }); */
+              scanner.decodeFromVideoDevice(
+                undefined,
+                "video",
+                async (result, err) => {
+                  if (result) {
+                    console.log("result: " + result);
+                    if (
+                      result.getBarcodeFormat() ===
+                      ZXing.BarcodeFormat.DATA_MATRIX
+                    ) {
+                      const rawText = result.getText();
+                      console.log("raw: " + rawText);
+
+                      // Example Usage:
+                      const decoded = await interpretScan(rawText);
+                      console.log("decoded 1: " + decoded);
+
+                      // Lookup  product and display
+                      try {
+                        //lookupProduct(decode);
+                        resultDiv.textContent = `complete`;
+                    resultDiv.classList.remove("hidden");
+                      } catch (error) {
+                        resultDiv.textContent = `Error1: ${error}`;
+                        result.classList.remove("hidden");
+                      }
+                      stopScanning();
+                    }
+                  } else if (err && !(err instanceof ZXing.NotFoundException)) {
+                    resultDiv.textContent = `Error2: ${err}`;
+                    resultDiv.classList.remove("hidden");
+                  }
+                }
+              );
+            });
 
           // Set the video element to use the stream
-          video.srcObject = stream;
-          video.classList.remove("hidden");
+
+          // Start decoding from the selected video device
         } catch (err) {
           resultDiv.textContent = `Error accessing camera: ${err.message}`;
+          resultDiv.classList.remove("hidden");
         }
       });
 
@@ -800,6 +750,103 @@
       }
 
       //////////////////////////////////////
+
+      async function loadCamerasAndGetPermissions() {
+        try {
+          // Check if mediaDevices and getUserMedia are supported
+          if (
+            "mediaDevices" in navigator &&
+            "getUserMedia" in navigator.mediaDevices
+          ) {
+            // Request camera permissions
+            const stream = await navigator.mediaDevices.getUserMedia({
+              video: true,
+              audio: false,
+            });
+            console.log("Access to media granted!");
+
+            // After getting permissions, list all available media devices
+            //const devices = await navigator.mediaDevices.enumerateDevices();
+            const devices = await scanner.listVideoInputDevices();
+            return devices;
+          } else {
+            throw new Error("Media devices not supported in this browser.");
+          }
+        } catch (error) {
+          /* console.error("Failed to access media devices:", error);
+          alert("Media access failed. Stopping all further processing.");
+          window.stop(); // Stops loading further resources and scripts
+          return []; // Return an empty array if permission is denied or fails */
+          throw new Error("Failed to access media devices:", error);
+        }
+      }
+
+      function lookupProduct(decode) {
+        const productCodeDatabase = [
+          {
+            pc: "06009544004714",
+            ref: "DCC4013",
+            manufacture: "Southern Implants",
+            type: "Implant",
+            name: "Deep Conical Implant",
+            desc: "4 x 13mm Parallel Walled Implant",
+          },
+          {
+            pc: "07630031707024",
+            ref: "021.5308",
+            manufacture: "Straumann",
+            type: "Implant",
+            name: "Bone Level Tapered Implant",
+            desc: "4.1mm RC, SLActive 8mm, Roxolid, Loxim",
+          },
+          {
+            pc: "07630031707048",
+            ref: "021.5312",
+            manufacture: "Straumann",
+            type: "Implant",
+            name: "Bone Level Tapered Implant",
+            desc: "4.1mm RC, SLActive 12mm, Roxolid, Loxim",
+          },
+          {
+            pc: "07630031707437",
+            ref: "021.7308",
+            manufacture: "Straumann",
+            type: "Implant",
+            name: "Bone Level Tapered Implant",
+            desc: "4.8mm RC, SLActive 8mm, Roxolid, Loxim",
+          },
+        ];
+
+        try {
+          const productCode = decoded.ol.find((item) => item.ai === "01").value;
+          const product = productCodeDatabase.find(
+            (item) => item.pc === productCode
+          );
+
+          resultDiv.innerHTML = `<h3>Product Data</h3>
+            <b>Product Code:</b> ${productCode} <br>
+            <b>Batch/Lot:</b> ${
+              decoded.ol.find((item) => item.ai === "10").value
+            } <br>
+            <b>Expiry Date:</b> ${
+              decoded.ol.find((item) => item.ai === "17").value
+            } <br>
+            ${
+              product
+                ? `
+              <b>Reference:</b> ${product.ref} <br>
+              <b>Manufacture:</b> ${product.manufacture} <br>
+              <b>Type:</b> ${product.type} <br>
+              <b>Name:</b> ${product.name} <br>
+              <b>Description:</b> ${product.desc} <br>
+            `
+                : "<b>Product details not found.</b>"
+            }
+          `;
+        } catch (error) {
+          throw error;
+        }
+      }
     </script>
   </body>
 </html>
