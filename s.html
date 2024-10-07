@@ -8,7 +8,7 @@
   </head>
   <body>
     <video id="video" width="300" height="200"></video>
-    <button id="start">Start Scanning</button>
+    <button id="start">Start Scanning 1</button>
     <div id="result"></div>
 
     <script>
@@ -19,6 +19,7 @@
 
       if (!("BarcodeDetector" in globalThis)) {
         console.log("Barcode Detector is not supported by this browser.");
+        document.getElementById("result").innerText = "Barcode Detector is not supported by this browser."
       } else {
         console.log("Barcode Detector supported!");
 
