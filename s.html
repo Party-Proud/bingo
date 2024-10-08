@@ -5,49 +5,202 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Data Matrix Scanner</title>
     <script src="https://unpkg.com/@zxing/library@latest"></script>
+    <style>
+        body {
+          font-family: Arial, sans-serif;
+          margin: 0;
+          padding: 0;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          height: 100vh;
+          background-color: #f0f0f0;
+        }
+  
+        #video {
+          width: 100%;
+          max-width: 400px;
+          margin-bottom: 20px;
+        }
+  
+        #result {
+          font-size: 18px;
+          margin-bottom: 20px;
+        }
+  
+        button {
+          padding: 10px 20px;
+          font-size: 16px;
+          margin: 10px;
+          cursor: pointer;
+        }
+  
+        .hidden {
+          display: none !important;
+        }
+  
+        .button-container {
+          display: flex;
+          flex-wrap: wrap; /* Allows buttons to wrap onto the next line on smaller screens */
+          justify-content: center; /* Center buttons horizontally */
+          margin: 20px; /* Adds space around the button container */
+        }
+  
+        .button-container button {
+          background-color: #007bff; /* Button background color */
+          color: white; /* Button text color */
+          border: none; /* Remove border */
+          border-radius: 5px; /* Rounded corners */
+          padding: 10px 15px; /* Button padding */
+          margin: 5px; /* Space between buttons */
+          cursor: pointer; /* Pointer cursor on hover */
+          font-size: 16px; /* Font size */
+          transition: background-color 0.3s, transform 0.2s; /* Smooth transition for hover effects */
+        }
+  
+        .button-container button:hover {
+          background-color: #0056b3; /* Darker blue on hover */
+          transform: scale(1.05); /* Slightly grow the button on hover */
+        }
+  
+        @media (max-width: 600px) {
+          .button-container button {
+            font-size: 14px; /* Smaller font size for mobile */
+            padding: 8px 12px; /* Adjust padding for mobile */
+          }
+        }
+      </style>
   </head>
   <body>
     <video id="video" width="300" height="200"></video>
-    <button id="start">Start Scanning 1</button>
+    <button id="start">Start Scanning 2</button>
+    <div id="deviceButtons" class="button-container"></div>
     <div id="result"></div>
+    <div id="logger"></div>
 
     <script>
       const codeReader = new ZXing.BrowserMultiFormatReader();
-      const videoElement = document.getElementById("video");
+      const video = document.getElementById("video");
+      const logger = document.getElementById("logger");
+      const resultDiv = document.getElementById("result");
+      const deviceButtons = document.getElementById("deviceButtons");
+      let listVideoInputDevices = null;
+      let selectedDeviceId = null;
+      const list = document.getElementById('barcode-list');
+let itemsFound = [];
 
+      window.addEventListener("load", async function () {
+        await loadCamerasAndGetPermissions()
+          .then((devices) => {
+            if (devices.length) {
+              console.log("Media devices found:", devices);
+              listVideoInputDevices = devices;
+            } else {
+              console.log("No media devices found or access denied.");
+            }
+          })
+          .catch((error) => {
+            // Handle the thrown error by updating the text field with id 'screenError'
+            resultDiv.innerText = `Error: ${error.message}`;
+            resultDiv.classList.remove("hidden");
+            console.error("Error caught:", error.message);
+          });
+
+        listVideoInputDevices.forEach((device, index) => {
+          const button = document.createElement("button");
+          const lbl = device.label || `Camera ${index + 1}`;
+          button.textContent = lbl;
+          button.addEventListener("click", () => {
+            selectedDeviceId = device.deviceId;
+            resultDiv.textContent = `Selected: ${lbl}`;
+            startBtn.classList.remove("hidden");
+          });
+          deviceButtons.appendChild(button);
+        });
+      });
+      
+      
       // check supported types
 
       if (!("BarcodeDetector" in globalThis)) {
         console.log("Barcode Detector is not supported by this browser.");
-        document.getElementById("result").innerText = "Barcode Detector is not supported by this browser."
+        addToLog("Barcode Detector is not supported by this browser.");
       } else {
-        console.log("Barcode Detector supported!");
+        addToLog("Barcode Detector supported!");
 
         const barcodeDetector = new BarcodeDetector({
           formats: ["data_matrix", "pdf417", "qr_code"],
         });
         barcodeDetector.getSupportedFormats().then((supportedFormats) => {
-          supportedFormats.forEach((format) => console.log(format));
+          supportedFormats.forEach((format) => addToLog(`Format: ${format}`));
         });
       }
 
       document.getElementById("start").addEventListener("click", () => {
-        codeReader.decodeFromVideoDevice(null, videoElement, (result, err) => {
-          if (result) {
-            // Check if the result is a Data Matrix code
-            const format = result.getBarcodeFormat();
-            document.getElementById("result").innerText = `format: ${format}`;
-            if (format === ZXing.BarcodeFormat.DATA_MATRIX) {
-              document.getElementById(
-                "result"
-              ).innerText = `Data Matrix Code: ${result.text}`;
-            }
-          }
-          if (err && !(err instanceof ZXing.NotFoundException)) {
-            console.error(err);
-          }
-        });
+        try {
+          scanning = true;
+          
+
+          // Apply continuous focus mode if the browser and device support it
+          navigator.mediaDevices
+            .getUserMedia({
+              video: {
+                deviceId: selectedDeviceId,
+                focusMode: { ideal: "continuous" }, // Continuous focus mode for better focus on small objects
+                width: { ideal: 640 }, // Reduce resolution to make the image more manageable
+                height: { ideal: 480 },
+                zoom: { ideal: 3.0 },
+                exposureMode: { ideal: "continuous" },
+                whiteBalanceMode: { ideal: "continuous" },
+                //facingMode: { exact: "environment" }
+              },
+            })
+            .then(function (stream) {
+              video.srcObject = stream;
+              video.play();
+              video.classList.remove("hidden");
+              list.before(video);
+              detect();
+            });
+
+          // Set the video element to use the stream
+
+          // Start decoding from the selected video device
+        } catch (err) {
+          resultDiv.textContent = `Error accessing camera: ${err.message}`;
+          resultDiv.classList.remove("hidden");
+        }
       });
+
+      function addToLog(text) {
+        const current = logger.innerHTML;
+        logger.innerHTML = `${current} <br> ${text}`;
+      }
+
+      async function detect() {
+  function render() {
+    barcodeDetector
+    .detect(video)
+    .then((barcodes) => {
+      barcodes.forEach((barcode) => {
+        if (!itemsFound.includes(barcode.rawValue)) {
+          itemsFound.push(barcode.rawValue);
+          const li = document.createElement('li');
+          li.innerHTML = barcode.rawValue;
+          list.appendChild(li);
+          result.textContent = list;
+        }
+      });
+    })
+    .catch(console.error);
+  }
+
+  (function renderLoop() {
+    requestAnimationFrame(renderLoop);
+    render();
+  })();
+}
     </script>
   </body>
 </html>
