@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Data Matrix Scanner</title>
+    <title>Data Matrix Scanner 3</title>
     <script src="https://unpkg.com/@zxing/library@latest"></script>
     <style>
         body {
@@ -74,7 +74,7 @@
   </head>
   <body>
     <video id="video" width="300" height="200"></video>
-    <button id="start">Start Scanning 2</button>
+    <button id="start">Start Scanning</button>
     <div id="deviceButtons" class="button-container"></div>
     <div id="result"></div>
     <div id="logger"></div>
@@ -91,20 +91,21 @@
 let itemsFound = [];
 
       window.addEventListener("load", async function () {
+        addToLog("hello")
         await loadCamerasAndGetPermissions()
           .then((devices) => {
             if (devices.length) {
-              console.log("Media devices found:", devices);
+                addToLog("Media devices found:", devices);
               listVideoInputDevices = devices;
             } else {
-              console.log("No media devices found or access denied.");
+              addToLog("No media devices found or access denied.");
             }
           })
           .catch((error) => {
             // Handle the thrown error by updating the text field with id 'screenError'
             resultDiv.innerText = `Error: ${error.message}`;
             resultDiv.classList.remove("hidden");
-            console.error("Error caught:", error.message);
+            addToLog("Error caught:", error.message);
           });
 
         listVideoInputDevices.forEach((device, index) => {
@@ -118,6 +119,7 @@ let itemsFound = [];
           });
           deviceButtons.appendChild(button);
         });
+        deviceButtons.classList.remove('hidden')
       });
       
       
